@@ -1,0 +1,1 @@
+select * from osm_roads where highway in ('primary', 'secondary', 'tertiary', 'unclassified', 'residential');
