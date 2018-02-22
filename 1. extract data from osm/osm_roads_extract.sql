@@ -1,1 +1,1 @@
-select * from osm_roads where highway in ('primary', 'secondary', 'tertiary', 'unclassified', 'residential');
+SELECT * FROM osm_roads WHERE highway IN ('primary', 'secondary', 'tertiary', 'unclassified', 'residential');
