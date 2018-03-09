@@ -1,5 +1,7 @@
-﻿SELECT *
-FROM shortest_path(
+﻿select * from roads.roads_rdbl a
+inner join (
+SELECT *
+FROM pgr_dijkstra(
 	'SELECT edge_id AS id,
 				  start_id::int4 AS source,
 				  end_id::int4 AS target,
@@ -7,6 +9,5 @@ FROM shortest_path(
     FROM roads.roads_rdbl',
 	325,
 	719,
-	false,
 	false
-);
+)) as route on a.edge_id = route.edge
