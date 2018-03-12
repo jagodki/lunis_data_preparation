@@ -1,4 +1,6 @@
-﻿select * from roads.roads_rdbl a
+﻿CREATE EXTENSION pgrouting;
+
+select * from roads.roads_rdbl a
 inner join (
 SELECT *
 FROM pgr_dijkstra(
