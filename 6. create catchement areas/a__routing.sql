@@ -12,4 +12,21 @@ FROM pgr_dijkstra(
 	325,
 	719,
 	false
-)) as route on a.edge_id = route.edge
+)) as route on a.edge_id = route.edge;
+
+create table pgchainage.catchment_905 as
+select
+    id,
+    the_geom,
+    (select sum(cost) from (
+       SELECT * FROM shortest_path('
+       SELECT id,
+          start_id AS source,
+          end_id AS target,
+          cost
+       FROM network',
+       905,
+       id,
+       false,
+       false)) as foo ) as cost
+from pgchainage.roads_rdbl_chainage;
