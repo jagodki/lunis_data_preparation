@@ -1,6 +1,6 @@
 --add columns to store mandatory information for routing
 ALTER TABLE pgchainage.roads_rdbl_substring
-ADD COLUMN  start_id integer,
+ADD COLUMN start_id integer,
 ADD COLUMN end_id integer,
 ADD COLUMN cost double precision;
 
@@ -23,3 +23,7 @@ WHERE r.id = s.edge_id AND r.id = e.edge_id;
 SELECT *
 FROM pgchainage.roads_rdbl_substring
 WHERE start_id IS NULL OR end_id IS NULL OR cost IS NULL;
+
+--create indices on start_id and end_id for faster routing
+CREATE INDEX IF NOT EXISTS roads_rdbl_substring_start_idx ON pgchainage.roads_rdbl_substring (start_id);
+CREATE INDEX IF NOT EXISTS roads_rdbl_substring_end_idx ON pgchainage.roads_rdbl_substring (end_id);
