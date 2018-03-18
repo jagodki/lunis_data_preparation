@@ -4,6 +4,10 @@ ADD COLUMN start_id integer,
 ADD COLUMN end_id integer,
 ADD COLUMN cost double precision;
 
+--create spatial index over nodes to improve speed of the following query
+CREATE INDEX roads_rdbl_chainage_gix ON pgchainage.roads_rdbl_chainage 
+USING GIST (geom);
+
 --fill the new columns
 WITH startnodes AS (
 		SELECT c.id, s.id AS edge_id
