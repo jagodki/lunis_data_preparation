@@ -1,7 +1,4 @@
-﻿--create a new schema called 'lunis'
-CREATE SCHEMA lunis;
-
-----------------------------------------
+﻿----------------------------------------
 --create administration schema and depending tables
 CREATE SCHEMA administration;
 CREATE TABLE administration.country(
@@ -17,7 +14,8 @@ CREATE TABLE administration.city(
 	id SERIAL PRIMARY KEY,
 	region_id INTEGER REFERENCES administration.region(id),
 	name CHARACTER VARYING,
-	last_update TIMESTAMP
+	last_update TIMESTAMP,
+	source CHARACTER VARYING
 );
 
 --add a geometry column to the city table
@@ -50,7 +48,7 @@ CREATE TABLE addresses.housenumber(
 	street_id INTEGER REFERENCES addresses.street(id),
 	number CHARACTER VARYING
 );
-CREATE VIEW adresses.adresses_view AS
+CREATE VIEW addresses.adresses_view AS
 	SELECT h.id AS id, co.name AS country, ci.name AS city, p.code AS postal_code, s.name AS street, h.number AS housenumber
 	FROM addresses.country co, addresses.city ci, addresses.postal_code p, addresses.street s, addresses.housenumber h
 	WHERE h.street_id = s.id AND s.postal_code_id = p.id AND p.city_id = ci.id AND ci.country_id = co.id;
@@ -72,27 +70,34 @@ CREATE TABLE schools.schools(
 	administration_id INTEGER REFERENCES administration.city(id),
 	address INTEGER REFERENCES addresses.housenumber(id),
 	school_type INTEGER REFERENCES schools.school_type(id),
-	specialisation INTEGER REFERENCES lunis.specialisation(id),
+	specialisation INTEGER REFERENCES schools.specialisation(id),
 	website CHARACTER VARYING,
 	wikipedia CHARACTER VARYING,
 	mail CHARACTER VARYING,
-	telefon CHARACTER VARYING,
-	source CHARACTER VARYING
+	telefon CHARACTER VARYING
 );
 
 SELECT addGeometryColumn('schools', 'schools', 'geom', 4326, 'POINT', 2);
 
 ----------------------------------------
---create lunis schema and depending views
+--create a new schema called 'lunis'
+CREATE SCHEMA lunis;
+
+--create depending views in schema 'lunis'
 CREATE VIEW lunis.administration_views AS
-	SELECT ci.id AS id, ci.name AS city, r.name AS region, co.name AS country, ci.last_update AS last_update, ci.geom AS geom
+	SELECT ci.id AS id, ci.name AS city, r.name AS region, co.name AS country, ci.source AS source, ci.last_update AS last_update, ci.geom AS geom
 	FROM administration.country co, administration.region r, administration.city ci
 	WHERE co.id = r.country_id AND r.id = ci.region_id;
+	
 CREATE VIEW lunis.schools_view AS
 	SELECT s_s.id, s_s.name, (admin_ci.name || '/' || admin_r.name || '/' || admin_co.name) AS district,
-		   (add_s.name || ' ' || add_h.number || ', ' add_p.code || ' ' || add_ci.name || ', ' add_ci.name) AS address
-		   s_t.name AS school_type, s_spec.name AS specialisations, s_s.geom AS geom
+		   (add_s.name || ' ' || add_h.number || ', ' || add_p.code || ' ' || add_ci.name || ', ' || add_ci.name) AS address, 
+		   s_t.name AS school_type, s_spec.name AS specialisations, s_s.website AS website, s_s.wikipedia AS wikipedia,
+		   s_s.mail AS mail, s_s.telefon AS telefon, s_s.geom AS geom
 	FROM schools.schools s_s, schools.school_type s_t, schools.specialisation s_spec,
 		 administration.country admin_co, administration.region admin_r, administration.city admin_ci,
 		 addresses.housenumber add_h, addresses.street add_s, addresses.postal_code add_p, addresses.city add_ci, addresses.country add_co
-	WHERE s.admin_id = a.id AND s.school_type = t.id AND s.specialisation = spec.id;
+	WHERE s_s.school_type = s_t.id AND s_s.specialisation = s_spec.id AND
+		  s_s.administration_id = admin_ci.id AND admin_ci.region_id = admin_r.id AND admin_r.country_id = admin_co.id AND
+		  s_s.address = add_h.id AND add_h.street_id = add_s.id AND add_s.postal_code_id = add_p.id AND
+		  add_p.city_id = add_ci.id AND add_ci.country_id = add_co.id;
