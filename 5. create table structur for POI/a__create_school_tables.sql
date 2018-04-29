@@ -70,11 +70,15 @@ CREATE TABLE schools.schools(
 	administration_id INTEGER REFERENCES administration.city(id),
 	address INTEGER REFERENCES addresses.housenumber(id),
 	school_type INTEGER REFERENCES schools.school_type(id),
-	specialisation INTEGER REFERENCES schools.specialisation(id),
 	website CHARACTER VARYING,
 	wikipedia CHARACTER VARYING,
 	mail CHARACTER VARYING,
 	telefon CHARACTER VARYING
+);
+CREATE TABLE schools.specialisation_schools_join(
+	id SERIAL PRIMARY KEY,
+	school_id INTEGER REFERENCES schools.schools(id),
+	specialisation_id INTEGER REFERENCES schools.specialisation(id)
 );
 
 SELECT addGeometryColumn('schools', 'schools', 'geom', 4326, 'POINT', 2);
@@ -91,13 +95,14 @@ CREATE VIEW lunis.administration_views AS
 	
 CREATE VIEW lunis.schools_view AS
 	SELECT s_s.id, s_s.name, (admin_ci.name || '/' || admin_r.name || '/' || admin_co.name) AS district,
-		   (add_s.name || ' ' || add_h.number || ', ' || add_p.code || ' ' || add_ci.name || ', ' || add_ci.name) AS address, 
-		   s_t.name AS school_type, s_spec.name AS specialisations, s_s.website AS website, s_s.wikipedia AS wikipedia,
+		   (add_s.name || ' ' || add_h.number || ', ' || add_p.code || ' ' || add_ci.name || ', ' || add_co.name) AS school_address, 
+		   s_t.name AS school_type, string_agg(s_spec.name, ', ' ORDER BY s_spec.name) AS school_specialisations, s_s.website AS website, s_s.wikipedia AS wikipedia,
 		   s_s.mail AS mail, s_s.telefon AS telefon, s_s.geom AS geom
-	FROM schools.schools s_s, schools.school_type s_t, schools.specialisation s_spec,
+	FROM schools.schools s_s, schools.school_type s_t, schools.specialisation s_spec, schools.specialisation_schools_join s_s_j,
 		 administration.country admin_co, administration.region admin_r, administration.city admin_ci,
 		 addresses.housenumber add_h, addresses.street add_s, addresses.postal_code add_p, addresses.city add_ci, addresses.country add_co
-	WHERE s_s.school_type = s_t.id AND s_s.specialisation = s_spec.id AND
+	WHERE s_s.school_type = s_t.id AND s_s.id = s_s_j.school_id AND s_spec.id = s_s_j.specialisation_id AND
 		  s_s.administration_id = admin_ci.id AND admin_ci.region_id = admin_r.id AND admin_r.country_id = admin_co.id AND
 		  s_s.address = add_h.id AND add_h.street_id = add_s.id AND add_s.postal_code_id = add_p.id AND
-		  add_p.city_id = add_ci.id AND add_ci.country_id = add_co.id;
+		  add_p.city_id = add_ci.id AND add_ci.country_id = add_co.id
+	GROUP BY s_s.id, district, school_address, s_t.name, s_s.website, s_s.wikipedia, s_s.mail, s_s.telefon, s_s.geom;
