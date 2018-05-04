@@ -2,8 +2,8 @@
 CREATE EXTENSION postgis_topology;
 
 --create the topology on the roads-table
-SELECT topology.CreateTopology('roads_rdbl_topo', 25833);
-SELECT topology.AddTopoGeometryColumn('roads_rdbl_topo', 'temp', 'roads_rdbl_final', 'topo_geom', 'LINESTRING');
+SELECT topology.CreateTopology('roads_topo', 25833, 0.5);
+SELECT topology.AddTopoGeometryColumn('roads_topo', 'roads', 'roads_single_geom', 'topo_geom', 'LINESTRING');
 
 --update the topo-geometry
-UPDATE temp.roads_rdbl_final SET topo_geom = topology.toTopoGeom(ST_Transform(geom, 25833), 'roads_rdbl_topo', 1, 0.5);
+--UPDATE roads.roads_single_geom SET topo_geom = topology.toTopoGeom(ST_Transform(geom, 25833), 'roads_topo', 1, 0.5);
