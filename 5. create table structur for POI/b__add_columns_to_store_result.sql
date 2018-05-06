@@ -4,7 +4,7 @@ DECLARE
 	i RECORD;
 BEGIN
        FOR i IN SELECT id FROM schools.schools LOOP
-               EXECUTE 'ALTER TABLE pgchainage.edge_data_chainage ADD COLUMN school_name_' || i.id || ' double precision;';
+               EXECUTE 'ALTER TABLE pgchainage.edge_data_chainage ADD COLUMN school_id_' || i.id || ' double precision;';
        END LOOP;
 END
 $BODY$
