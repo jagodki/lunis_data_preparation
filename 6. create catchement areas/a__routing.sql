@@ -7,7 +7,7 @@ DECLARE
 	i RECORD;
 BEGIN
     FOR i IN
-		SELECT DISTINCT ON (b.id) a.id AS node_id, b.id AS school_id, MIN(ST_Distance(ST_Transform(b.geom, 25833), a.geom))
+		SELECT DISTINCT ON (b.id) a.id AS node_id, b.id AS school_id, MIN(ST_Distance(ST_Transform(b.geom, 25833), a.geom)) AS distance
     	FROM pgchainage.edge_data_chainage a, schools.schools b
     	GROUP BY a.id, b.id
 		ORDER BY b.id, ST_Distance(ST_Transform(b.geom, 25833), a.geom) ASC
@@ -21,6 +21,10 @@ BEGIN
             i.node_id || ', id, FALSE)) AS foo) AS cost ' ||
             'from pgchainage.edge_data_chainage) foo2 ' ||
             'WHERE c.id = foo2.id;';
-       END LOOP;
+        EXECUTE
+        	'UPDATE pgchainage.edge_data_chainage c ' ||
+        	'SET school_id_' || i.school_id || '= 0.0' ||
+        	'WHERE c.id = ' || i.node_id || ';';
+    END LOOP;
 END
 $BODY$
