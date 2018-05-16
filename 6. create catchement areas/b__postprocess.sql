@@ -14,3 +14,8 @@ BEGIN
     END LOOP;
 END
 $BODY$
+
+--add an additional geometry column with EPSG:4326
+SELECT AddGeometryColumn('pgchainage', 'edge_data_chainage', 'geom_wgs', 4326, 'POINT', 2);
+UPDATE pgchainage.edge_data_chainage
+SET geom_wgs = ST_Transform(geom, 4326);

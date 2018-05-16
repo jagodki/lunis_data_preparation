@@ -93,7 +93,7 @@ SELECT addGeometryColumn('schools', 'schools', 'geom', 4326, 'POINT', 2);
 CREATE SCHEMA lunis;
 
 --create depending views in schema 'lunis'
-CREATE VIEW lunis.administration_views AS
+CREATE VIEW lunis.administration_view AS
 	SELECT ci.id AS id, ci.name AS city, r.name AS region, co.name AS country, ci.source AS source, ci.last_update AS last_update, ci.geom AS geom
 	FROM administration.country co, administration.region r, administration.city ci
 	WHERE co.id = r.country_id AND r.id = ci.region_id;
