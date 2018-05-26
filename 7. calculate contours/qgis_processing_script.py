@@ -7,24 +7,15 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingParameterNumber,
                        QgsProcessingAlgorithm,
-                       QgsProcessingParameterFeatureSource,
-                       QgsProcessingParameterFeatureSink)
+                       QgsProject,
+                       QgsFieldConstraints,
+                       QgsProcessingParameterVectorLayer)
+#from qgis import *
+import processing
+import time, sys
 
 
 class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
-    """
-    This is an example algorithm that takes a vector layer and
-    creates a new identical one.
-
-    It is meant to be used as an example of how to create your own
-    algorithms and explain methods and variables used to do it. An
-    algorithm like this will be available in all elements, and there
-    is not need for additional work.
-
-    All Processing algorithms should extend the QgsProcessingAlgorithm
-    class.
-    """
-
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
@@ -34,56 +25,33 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
     OUTPUT = 'OUTPUT'
 
     def tr(self, string):
-        """
-        Returns a translatable string with the self.tr() function.
-        """
+        """Returns a translatable string with the self.tr() function."""
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
         return ExampleProcessingAlgorithm()
 
     def name(self):
-        """
-        Returns the algorithm name, used for identifying the algorithm. This
-        string should be fixed for the algorithm, and must not be localised.
-        The name should be unique within each provider. Names should contain
-        lowercase alphanumeric characters only and no spaces or other
-        formatting characters.
-        """
-        return 'myscript'
+        """Returns the algorithm name, used for identifying the algorithm."""
+        return 'contour_batch'
 
     def displayName(self):
-        """
-        Returns the translated algorithm name, which should be used for any
-        user-visible display of the algorithm name.
-        """
-        return self.tr('My Script')
+        """Returns the translated algorithm name, which should be used for any user-visible display of the algorithm name."""
+        return self.tr('Contour Batch')
 
     def group(self):
-        """
-        Returns the name of the group this algorithm belongs to. This string
-        should be localised.
-        """
-        return self.tr('Example scripts')
+        """Returns the name of the group this algorithm belongs to. """
+        return self.tr('own scripts')
 
     def groupId(self):
-        """
-        Returns the unique ID of the group this algorithm belongs to. This
-        string should be fixed for the algorithm, and must not be localised.
-        The group id should be unique within each provider. Group id should
-        contain lowercase alphanumeric characters only and no spaces or other
-        formatting characters.
-        """
-        return 'examplescripts'
+        """Returns the unique ID of the group this algorithm belongs to."""
+        return 'ownscripts'
 
     def initAlgorithm(self, config=None):
-        """
-        Here we define the inputs and output of the algorithm, along
-        with some other properties.
-        """
+        """Here we define the inputs and output of the algorithm, along with some other properties."""
         
         self.addParameter(
-            QgsProcessingParameterFeatureSource(
+            QgsProcessingParameterVectorLayer(
                 self.INPUT,
                 self.tr('Input layer'),
                 [QgsProcessing.TypeVectorPoint]
@@ -94,13 +62,11 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.EQUIDISTANCE,
                 self.tr('Equidistance (m)'),
-                defaultValue=0
+                defaultValue=500,
+                minValue=1
             )
         )
-
-        # We add a feature sink in which to store our processed features (this
-        # usually takes the form of a newly created vector layer when the
-        # algorithm is run in QGIS).
+    
         self.addParameter(
             QgsProcessingParameterFolderDestination(
                 self.OUTPUT,
@@ -117,42 +83,75 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         # Retrieve the feature source and sink. The 'dest_id' variable is used
         # to uniquely identify the feature sink, and must be included in the
         # dictionary returned by the processAlgorithm function.
-        source = self.parameterAsSource(
+        source = self.parameterAsVectorLayer(
             parameters,
             self.INPUT,
             context
         )
         
+        equidistance = self.parameterAsDouble(
+            parameters,
+            self.EQUIDISTANCE,
+            context
+        )
         
-        (sink, dest_id) = self.parameterAsSink(
+        destination = self.parameterAsString(
             parameters,
             self.OUTPUT,
-            context,
-            source.fields(),
-            source.wkbType(),
-            source.sourceCrs()
+            context
         )
-
-        # Compute the number of steps to display within the progress bar and
-        # get features from source
-        total = 100.0 / source.featureCount() if source.featureCount() else 0
-        features = source.getFeatures()
-
-        for current, feature in enumerate(features):
+        
+        #get the count of all needed fields
+        count_of_school_fields = self.get_count_of_school_fields(source)
+        total = 100.0 / count_of_school_fields if count_of_school_fields > 0 else 0
+        
+        #init the result map
+        result = {}
+        
+        #iterate over all fields of this layer
+        for current, field in enumerate(source.fields()):
+            print(str(current))
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
                 break
-
-            # Add a feature in the sink
-            sink.addFeature(feature, QgsFeatureSink.FastInsert)
-
-            # Update the progress bar
-            feedback.setProgress(int(current * total))
-
-        # Return the results of the algorithm. In this case our only result is
-        # the feature sink which contains the processed features, but some
-        # algorithms may return multiple feature sinks, calculated numeric
-        # statistics, etc. These should all be included in the returned
-        # dictionary, with keys matching the feature corresponding parameter
-        # or output names.
-        return {self.OUTPUT: dest_id}
+            
+            #evaluate the name of the current field
+            if field.name().startswith("school_id"):
+                #add a filter expression to the current field
+                source.setSubsetString(field.name() + " is not null")
+                
+                #start the processing
+                parameters = self.create_parameters(source, field.name(), equidistance)
+                try:
+                    processing.run('Contour:contour', parameters)
+                    result.update({field.name() : 'ok'})
+                except:
+                    result.update({field.name() : 'error'})
+                
+                #remove null filter
+                source.setSubsetString("")
+                
+                #update progressbar
+                feedback.setProgress(int(current * total))
+                
+        return result
+    
+    def get_count_of_school_fields(self, layer):
+        '''This function iterates over all fields of a given layer and returns the count of fields starting with "school".'''
+        count = 0
+        for field in layer.fields():
+            if field.name().startswith("school"):
+                count += 1
+        return count
+    
+    def create_parameters(self, layer, field_name, equidistance):
+        """This function creates the parameters for the processing call of the Cotnour plugin."""
+        #get the highest value in the given field
+        field_id = layer.dataProvider().fieldNameIndex(field_name)
+        maximum_value = layer.maximumValue(field_id)
+        
+        #calculate the count of needed contours depending of the equidistance
+        count_of_contours = (int) (maximum_value / equidistance)
+        if (maximum_value % equidistance) != 0:
+            count_of_contours = count_of_contours + 1
+        return 1
