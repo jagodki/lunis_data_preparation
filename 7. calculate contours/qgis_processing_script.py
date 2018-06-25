@@ -41,11 +41,11 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
 
     def group(self):
         """Returns the name of the group this algorithm belongs to. """
-        return self.tr('own scripts')
+        return self.tr('Lunis')
 
     def groupId(self):
         """Returns the unique ID of the group this algorithm belongs to."""
-        return 'ownscripts'
+        return 'lunis'
 
     def initAlgorithm(self, config=None):
         """Here we define the inputs and output of the algorithm, along with some other properties."""
@@ -110,7 +110,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         
         #iterate over all fields of this layer
         for current, field in enumerate(source.fields()):
-            print(str(current))
+            #print(str(current))
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
                 break
@@ -118,18 +118,18 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             #evaluate the name of the current field
             if field.name().startswith("school_id"):
                 #add a filter expression to the current field
-                source.setSubsetString(field.name() + " is not null")
+                #source.setSubsetString(field.name() + " is not null")
                 
                 #start the processing
-                parameters = self.create_parameters(source, field.name(), equidistance)
+                parameters = self.create_parameters(source, field.name(), equidistance, destination)
                 try:
-                    processing.run('Contour:contour', parameters)
+                    processing.run('contourplugin:generatecontours', parameters)
                     result.update({field.name() : 'ok'})
                 except:
                     result.update({field.name() : 'error'})
                 
                 #remove null filter
-                source.setSubsetString("")
+                #source.setSubsetString("")
                 
                 #update progressbar
                 feedback.setProgress(int(current * total))
@@ -144,14 +144,54 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 count += 1
         return count
     
-    def create_parameters(self, layer, field_name, equidistance):
-        """This function creates the parameters for the processing call of the Cotnour plugin."""
-        #get the highest value in the given field
+    def create_parameters(self, layer, field_name, equidistance, output):
+        '''This function creates the parameters for the processing call of the Contour plugin.'''
+        parameters = {}
+        
+        #set the input layer
+        parameters.update({'InputLayer': layer})
+        
+        #set the input field/the input expression
+        parameters.update({'inputField': (field_name + ' is not null')})
+        
+        #set tolerance of duplicate points
+        duplicatePointTolerance = 0
+        
+        #set the contour type (both, i.e. lines and polygons)
+        contourType = 2
+        
+        #set extend option (fill below minimum contour)
+        extendOption = 1
+        
+        #set contour method (=fixed contour interval)
+        contourMethod = 3
+        
+        #number of contours
         field_id = layer.dataProvider().fieldNameIndex(field_name)
         maximum_value = layer.maximumValue(field_id)
-        
-        #calculate the count of needed contours depending of the equidistance
-        count_of_contours = (int) (maximum_value / equidistance)
+        nContours = (int) (maximum_value / equidistance)
         if (maximum_value % equidistance) != 0:
-            count_of_contours = count_of_contours + 1
-        return 1
+            nContours = nContours + 1
+        
+        #minimum contour value
+        minContourValue = equidistance
+        
+        #maximum contour value
+        maxContourValue = nContours * equidistance
+        
+        #set the contour interval
+        contourInterval = equidistance
+        
+        #set the count of decimal places
+        labelDecimalPlaces = 0
+        
+        #remove double zeros behind the comma
+        labelTrimZeros = False
+        
+        #set the label units
+        labelUnits = "m"
+        
+        #set output layer
+        outputLayer = output + '/' + layer.name() + '_' + field_name + '.geojson'
+        
+        return parameters
