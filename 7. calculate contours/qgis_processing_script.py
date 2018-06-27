@@ -10,9 +10,8 @@ from qgis.core import (QgsProcessing,
                        QgsProject,
                        QgsFieldConstraints,
                        QgsProcessingParameterVectorLayer)
-#from qgis import *
 import processing
-import time, sys
+import traceback, sys
 
 
 class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
@@ -76,13 +75,10 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         
 
     def processAlgorithm(self, parameters, context, feedback):
-        """
+        '''
         Here is where the processing itself takes place.
-        """
-
-        # Retrieve the feature source and sink. The 'dest_id' variable is used
-        # to uniquely identify the feature sink, and must be included in the
-        # dictionary returned by the processAlgorithm function.
+        '''
+        
         source = self.parameterAsVectorLayer(
             parameters,
             self.INPUT,
@@ -121,12 +117,28 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 #source.setSubsetString(field.name() + " is not null")
                 
                 #start the processing
-                parameters = self.create_parameters(source, field.name(), equidistance, destination)
                 try:
-                    processing.run('contourplugin:generatecontours', parameters)
+                    count_of_contours = self.getNumberOfContours(source, field.name(), equidistance)
+                    output = destination + '/' + source.name() + '_' + field.name() + '.geojson'
+                    processing.run('contourplugin:generatecontours',
+                                    source,                                  #the input layer
+                                    field.name(),                            #the field for interpolating points
+                                    0.0,                                     #tolerance of duplicate points
+                                    2,                                       #contour type
+                                    1,                                       #extend option
+                                    3,                                       #contour method
+                                    count_of_contours,                       #number of contours
+                                    equidistance,                            #minimum contour level
+                                    count_of_contours * equidistance,       #maximum contour level
+                                    equidistance,                            #contour interval
+                                    0,                                       #decimal places
+                                    False,                                   #remove double zeros behind comma
+                                    'm',                                     #label unit
+                                    output)                                  #the output path
+                                    
                     result.update({field.name() : 'ok'})
                 except:
-                    result.update({field.name() : 'error'})
+                    result.update({field.name() : traceback.format_exc()})
                 
                 #remove null filter
                 #source.setSubsetString("")
@@ -143,55 +155,15 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             if field.name().startswith("school"):
                 count += 1
         return count
-    
-    def create_parameters(self, layer, field_name, equidistance, output):
-        '''This function creates the parameters for the processing call of the Contour plugin.'''
-        parameters = {}
-        
-        #set the input layer
-        parameters.update({'InputLayer': layer})
-        
-        #set the input field/the input expression
-        parameters.update({'inputField': (field_name + ' is not null')})
-        
-        #set tolerance of duplicate points
-        duplicatePointTolerance = 0
-        
-        #set the contour type (both, i.e. lines and polygons)
-        contourType = 2
-        
-        #set extend option (fill below minimum contour)
-        extendOption = 1
-        
-        #set contour method (=fixed contour interval)
-        contourMethod = 3
-        
-        #number of contours
+
+    def getNumberOfContours(self, layer, field_name, equidistance):
+        '''This function calculates the count of necessary contours.'''
         field_id = layer.dataProvider().fieldNameIndex(field_name)
         maximum_value = layer.maximumValue(field_id)
-        nContours = (int) (maximum_value / equidistance)
+        
+        number_of_contours = (int) (maximum_value / equidistance)
+        
         if (maximum_value % equidistance) != 0:
-            nContours = nContours + 1
+            number_of_contours = number_of_contours + 1
         
-        #minimum contour value
-        minContourValue = equidistance
-        
-        #maximum contour value
-        maxContourValue = nContours * equidistance
-        
-        #set the contour interval
-        contourInterval = equidistance
-        
-        #set the count of decimal places
-        labelDecimalPlaces = 0
-        
-        #remove double zeros behind the comma
-        labelTrimZeros = False
-        
-        #set the label units
-        labelUnits = "m"
-        
-        #set output layer
-        outputLayer = output + '/' + layer.name() + '_' + field_name + '.geojson'
-        
-        return parameters
+        return number_of_contours
