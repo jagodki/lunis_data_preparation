@@ -21,6 +21,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
 
     INPUT = 'INPUT'
     EQUIDISTANCE = 'EQUIDISTANCE'
+    CLIP = 'CLIP'
     OUTPUT = 'OUTPUT'
 
     def tr(self, string):
@@ -65,6 +66,14 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 minValue=1
             )
         )
+        
+        self.addParameter(
+            QgsProcessingParameterVectorLayer(
+                self.CLIP,
+                self.tr('Clip layer'),
+                [QgsProcessing.TypeVectorPolygon]
+            )
+        )
     
         self.addParameter(
             QgsProcessingParameterFolderDestination(
@@ -79,7 +88,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         '''
         
-        source = self.parameterAsVectorLayer(
+        input_layer = self.parameterAsVectorLayer(
             parameters,
             self.INPUT,
             context
@@ -91,21 +100,27 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             context
         )
         
-        destination = self.parameterAsString(
+        clip_layer = self.parameterAsVectorLayer(
+            parameters,
+            self.CLIP,
+            context
+        )
+        
+        output_directory = self.parameterAsString(
             parameters,
             self.OUTPUT,
             context
         )
         
         #get the count of all needed fields
-        count_of_school_fields = self.get_count_of_school_fields(source)
+        count_of_school_fields = self.get_count_of_school_fields(input_layer)
         total = 100.0 / count_of_school_fields if count_of_school_fields > 0 else 0
         
         #init the result map
         result = {}
         
         #iterate over all fields of this layer
-        for current, field in enumerate(source.fields()):
+        for current, field in enumerate(input_layer.fields()):
             #print(str(current))
             # Stop the algorithm if cancel button has been clicked
             if feedback.isCanceled():
@@ -114,34 +129,61 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             #evaluate the name of the current field
             if field.name().startswith("school_id"):
                 #add a filter expression to the current field
-                #source.setSubsetString(field.name() + " is not null")
+                #input_layer.setSubsetString(field.name() + " is not null")
                 
                 #start the processing
                 try:
-                    count_of_contours = self.getNumberOfContours(source, field.name(), equidistance)
-                    output = destination + '/' + source.name() + '_' + field.name() + '.geojson'
+                    count_of_contours = self.getNumberOfContours(input_layer, field.name(), equidistance)
+                    output_linestring = output_directory + '/' + input_layer.name() + '_' + field.name() + '_linestring.geojson'
+                    output_polygon = output_directory + '/' + input_layer.name() + '_' + field.name() + '_polygon.geojson'
+                    
+                    #create polygons
                     processing.run('contourplugin:generatecontours',
-                                    source,                                  #the input layer
-                                    field.name(),                            #the field for interpolating points
-                                    0.0,                                     #tolerance of duplicate points
-                                    2,                                       #contour type
-                                    1,                                       #extend option
-                                    3,                                       #contour method
-                                    count_of_contours,                       #number of contours
-                                    equidistance,                            #minimum contour level
-                                    count_of_contours * equidistance,       #maximum contour level
-                                    equidistance,                            #contour interval
-                                    0,                                       #decimal places
-                                    False,                                   #remove double zeros behind comma
-                                    'm',                                     #label unit
-                                    output)                                  #the output path
-                                    
+                                      [input_layer,                             #the input layer
+                                       field.name() + ' is not null',           #the field for interpolating points
+                                       0.0,                                     #tolerance of duplicate points
+                                       1,                                       #contour type
+                                       0,                                       #extend option
+                                       3,                                       #contour method
+                                       count_of_contours,                       #number of contours
+                                       equidistance,                            #minimum contour level
+                                       count_of_contours * equidistance,        #maximum contour level
+                                       equidistance,                            #contour interval
+                                       0,                                       #decimal places
+                                       False,                                   #remove double zeros behind comma
+                                       'm',                                     #label unit
+                                       output_polygon])                         #the output path
+                    
+                    #create linestrings
+                    processing.run('contourplugin:generatecontours',
+                                      [input_layer,                             #the input layer
+                                       field.name() + ' is not null',           #the field for interpolating points
+                                       0.0,                                     #tolerance of duplicate points
+                                       0,                                       #contour type
+                                       None,                                    #extend option
+                                       3,                                       #contour method
+                                       count_of_contours,                       #number of contours
+                                       equidistance,                            #minimum contour level
+                                       count_of_contours * equidistance,        #maximum contour level
+                                       equidistance,                            #contour interval
+                                       0,                                       #decimal places
+                                       False,                                   #remove double zeros behind comma
+                                       'm',                                     #label unit
+                                       output_linestring])                       #the output path
+                    
+                    #clip the contours
+                    general.run('qgis:clip', [output_polygon, clip_layer, output_polygon])
+                    general.run('qgis:clip', [output_linestring, clip_layer, output_linestring])
+                    
                     result.update({field.name() : 'ok'})
                 except:
                     result.update({field.name() : traceback.format_exc()})
                 
+                #algOrName, parameters, onFinish, feedback, context
+                #runAlgorithm
+                
                 #remove null filter
-                #source.setSubsetString("")
+                #input_layer.setSubsetString("")
                 
                 #update progressbar
                 feedback.setProgress(int(current * total))
