@@ -9,9 +9,10 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingAlgorithm,
                        QgsProject,
                        QgsFieldConstraints,
-                       QgsProcessingParameterVectorLayer)
+                       QgsProcessingParameterVectorLayer,
+                       QgsProcessingFeedback)
 import processing
-import traceback, sys
+import traceback
 
 
 class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
@@ -139,37 +140,39 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                     
                     #create polygons
                     processing.run('contourplugin:generatecontours',
-                                      [input_layer,                             #the input layer
-                                       field.name() + ' is not null',           #the field for interpolating points
-                                       0.0,                                     #tolerance of duplicate points
-                                       1,                                       #contour type
-                                       0,                                       #extend option
-                                       3,                                       #contour method
-                                       count_of_contours,                       #number of contours
-                                       equidistance,                            #minimum contour level
-                                       count_of_contours * equidistance,        #maximum contour level
-                                       equidistance,                            #contour interval
-                                       0,                                       #decimal places
-                                       False,                                   #remove double zeros behind comma
-                                       'm',                                     #label unit
-                                       output_polygon])                         #the output path
+                                      {'InputLayer'             :    input_layer,                             #the input layer
+                                       'InputField'             :    field.name() + ' is not null',           #the field for interpolating points
+                                       'DuplicatePointTolerance':    0.0,                                     #tolerance of duplicate points
+                                       'ContourType'            :    1,                                       #contour type
+                                       'ExtendOption'           :    0,                                       #extend option
+                                       'ContourMethod'          :    3,                                       #contour method
+                                       'NContour'               :    count_of_contours,                       #number of contours
+                                       'MinContourValue'        :    equidistance,                            #minimum contour level
+                                       'MaxContourValue'        :    count_of_contours * equidistance,        #maximum contour level
+                                       'ContourInterval'        :    equidistance,                            #contour interval
+                                       'ContourLevels'          :    None,                                    #user defined levels
+                                       'LabelDecimalPlaces'     :    0,                                       #decimal places
+                                       'LabelTrimZeros'         :    False,                                   #remove double zeros behind comma
+                                       'LabelUnits'             :    'm',                                     #label unit
+                                       'OutputLayer'            :    output_polygon})                         #the output path
                     
                     #create linestrings
                     processing.run('contourplugin:generatecontours',
-                                      [input_layer,                             #the input layer
-                                       field.name() + ' is not null',           #the field for interpolating points
-                                       0.0,                                     #tolerance of duplicate points
-                                       0,                                       #contour type
-                                       None,                                    #extend option
-                                       3,                                       #contour method
-                                       count_of_contours,                       #number of contours
-                                       equidistance,                            #minimum contour level
-                                       count_of_contours * equidistance,        #maximum contour level
-                                       equidistance,                            #contour interval
-                                       0,                                       #decimal places
-                                       False,                                   #remove double zeros behind comma
-                                       'm',                                     #label unit
-                                       output_linestring])                       #the output path
+                                      {'InputLayer'             :    input_layer,                             #the input layer
+                                       'InputField'             :    field.name() + ' is not null',           #the field for interpolating points
+                                       'DuplicatePointTolerance':    0.0,                                     #tolerance of duplicate points
+                                       'ContourType'            :    0,                                       #contour type
+                                       'ExtendOption'           :    None,                                    #extend option
+                                       'ContourMethod'          :    3,                                       #contour method
+                                       'NContour'               :    count_of_contours,                       #number of contours
+                                       'MinContourValue'        :    equidistance,                            #minimum contour level
+                                       'MaxContourValue'        :    count_of_contours * equidistance,        #maximum contour level
+                                       'ContourInterval'        :    equidistance,                            #contour interval
+                                       'ContourLevels'          :    None,                                    #user defined levels
+                                       'LabelDecimalPlaces'     :    0,                                       #decimal places
+                                       'LabelTrimZeros'         :    False,                                   #remove double zeros behind comma
+                                       'LabelUnits'             :    'm',                                     #label unit
+                                       'OutputLayer'            :    output_linestring})                      #the output path
                     
                     #clip the contours
                     general.run('qgis:clip', [output_polygon, clip_layer, output_polygon])
