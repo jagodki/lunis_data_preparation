@@ -133,60 +133,63 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 #input_layer.setSubsetString(field.name() + " is not null")
                 
                 #start the processing
+                count_of_contours = self.getNumberOfContours(input_layer, field.name(), equidistance)
+                output_linestring = output_directory + '/' + input_layer.name() + '_' + field.name() + '_linestring.geojson'
+                output_polygon = output_directory + '/' + input_layer.name() + '_' + field.name() + '_polygon.geojson'
+                
                 try:
-                    count_of_contours = self.getNumberOfContours(input_layer, field.name(), equidistance)
-                    output_linestring = output_directory + '/' + input_layer.name() + '_' + field.name() + '_linestring.geojson'
-                    output_polygon = output_directory + '/' + input_layer.name() + '_' + field.name() + '_polygon.geojson'
-                    
                     #create polygons
-                    processing.run('contourplugin:generatecontours',
-                                      {'InputLayer'             :    input_layer,                             #the input layer
-                                       'InputField'             :    field.name() + ' is not null',           #the field for interpolating points
-                                       'DuplicatePointTolerance':    0.0,                                     #tolerance of duplicate points
-                                       'ContourType'            :    1,                                       #contour type
-                                       'ExtendOption'           :    0,                                       #extend option
-                                       'ContourMethod'          :    3,                                       #contour method
-                                       'NContour'               :    count_of_contours,                       #number of contours
-                                       'MinContourValue'        :    equidistance,                            #minimum contour level
-                                       'MaxContourValue'        :    count_of_contours * equidistance,        #maximum contour level
-                                       'ContourInterval'        :    equidistance,                            #contour interval
-                                       'ContourLevels'          :    None,                                    #user defined levels
-                                       'LabelDecimalPlaces'     :    0,                                       #decimal places
-                                       'LabelTrimZeros'         :    False,                                   #remove double zeros behind comma
-                                       'LabelUnits'             :    'm',                                     #label unit
-                                       'OutputLayer'            :    output_polygon})                         #the output path
-                    
+                    processing.run("contourplugin:generatecontours",
+                                   {'ContourInterval' : equidistance,
+                                   'DuplicatePointTolerance': 0.0,
+                                   'ContourLevels' : '',
+                                   'ContourMethod' : 3,
+                                   'ContourType' : 1,
+                                   'ExtendOption' : 0,
+                                   'InputField' : '"' + field.name() + ' is not null"',
+                                   'InputLayer' : input_layer,
+                                   'LabelTrimZeros' : False,
+                                   'LabelUnits' : 'm',
+                                   'MaxContourValue' : None,
+                                   'MinContourValue' : None,
+                                   'NContour' : None,
+                                   'OutputLayer' : output_polygon})
+                
+                    result.update({'1 - ' + field.name() + ' - polygon': 'ok'})
+                except:
+                    result.update({'1 - ' + field.name() + ' - polygon': traceback.format_exc()})
+                
+                try:
                     #create linestrings
-                    processing.run('contourplugin:generatecontours',
-                                      {'InputLayer'             :    input_layer,                             #the input layer
-                                       'InputField'             :    field.name() + ' is not null',           #the field for interpolating points
-                                       'DuplicatePointTolerance':    0.0,                                     #tolerance of duplicate points
-                                       'ContourType'            :    0,                                       #contour type
-                                       'ExtendOption'           :    None,                                    #extend option
-                                       'ContourMethod'          :    3,                                       #contour method
-                                       'NContour'               :    count_of_contours,                       #number of contours
-                                       'MinContourValue'        :    equidistance,                            #minimum contour level
-                                       'MaxContourValue'        :    count_of_contours * equidistance,        #maximum contour level
-                                       'ContourInterval'        :    equidistance,                            #contour interval
-                                       'ContourLevels'          :    None,                                    #user defined levels
-                                       'LabelDecimalPlaces'     :    0,                                       #decimal places
-                                       'LabelTrimZeros'         :    False,                                   #remove double zeros behind comma
-                                       'LabelUnits'             :    'm',                                     #label unit
-                                       'OutputLayer'            :    output_linestring})                      #the output path
+                    processing.run("contourplugin:generatecontours",
+                                   {'ContourInterval' : equidistance,
+                                   'DuplicatePointTolerance': 0.0,
+                                   'ContourLevels' : '',
+                                   'ContourMethod' : 3,
+                                   'ContourType' : 0,
+                                   'ExtendOption' : 0,
+                                   'InputField' : '"' + field.name() + ' is not null"',
+                                   'InputLayer' : input_layer,
+                                   'LabelTrimZeros' : False,
+                                   'LabelUnits' : 'm',
+                                   'MaxContourValue' : None,
+                                   'MinContourValue' : None,
+                                   'NContour' : None,
+                                   'OutputLayer' : output_linestring})
                     
+                    result.update({'2 - ' + field.name() + ' - linestring': 'ok'})
+                except:
+                    result.update({'2 - ' + field.name() + ' - linestring': traceback.format_exc()})
+                
+                try:
                     #clip the contours
                     general.run('qgis:clip', [output_polygon, clip_layer, output_polygon])
                     general.run('qgis:clip', [output_linestring, clip_layer, output_linestring])
                     
-                    result.update({field.name() : 'ok'})
+                    result.update({'3 - ' + field.name() + ' - clip': 'ok'})
+                
                 except:
-                    result.update({field.name() : traceback.format_exc()})
-                
-                #algOrName, parameters, onFinish, feedback, context
-                #runAlgorithm
-                
-                #remove null filter
-                #input_layer.setSubsetString("")
+                    result.update({'3 - ' + field.name() + ' - clip': traceback.format_exc()})
                 
                 #update progressbar
                 feedback.setProgress(int(current * total))
