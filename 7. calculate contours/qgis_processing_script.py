@@ -130,7 +130,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             #evaluate the name of the current field
             if field.name().startswith("school_id"):
                 #add a filter expression to the current field
-                #input_layer.setSubsetString(field.name() + " is not null")
+                input_layer.setSubsetString(field.name() + " is not null")
                 
                 #start the processing
                 count_of_contours = self.getNumberOfContours(input_layer, field.name(), equidistance)
@@ -141,19 +141,20 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                     #create polygons
                     processing.run("contourplugin:generatecontours",
                                    {'ContourInterval' : equidistance,
-                                   'DuplicatePointTolerance': 0.0,
-                                   'ContourLevels' : '',
-                                   'ContourMethod' : 3,
-                                   'ContourType' : 1,
-                                   'ExtendOption' : 0,
-                                   'InputField' : '"' + field.name() + ' is not null"',
-                                   'InputLayer' : input_layer,
-                                   'LabelTrimZeros' : False,
-                                   'LabelUnits' : 'm',
-                                   'MaxContourValue' : None,
-                                   'MinContourValue' : None,
-                                   'NContour' : None,
-                                   'OutputLayer' : output_polygon})
+                                    'DuplicatePointTolerance': 0.0,
+                                    'ContourLevels' : '',
+                                    'ContourMethod' : 3,
+                                    'ContourType' : 1,
+                                    'ExtendOption' : 0,
+                                    'InputField' : field.name(),
+                                    'InputLayer' : input_layer,
+                                    'LabelTrimZeros' : False,
+                                    'LabelDecimalPlaces' : 0,
+                                    'LabelUnits' : 'm',
+                                    'MaxContourValue' : None,
+                                    'MinContourValue' : equidistance,
+                                    'NContour' : None,
+                                    'OutputLayer' : output_polygon})
                 
                     result.update({'1 - ' + field.name() + ' - polygon': 'ok'})
                 except:
@@ -163,19 +164,20 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                     #create linestrings
                     processing.run("contourplugin:generatecontours",
                                    {'ContourInterval' : equidistance,
-                                   'DuplicatePointTolerance': 0.0,
-                                   'ContourLevels' : '',
-                                   'ContourMethod' : 3,
-                                   'ContourType' : 0,
-                                   'ExtendOption' : 0,
-                                   'InputField' : '"' + field.name() + ' is not null"',
-                                   'InputLayer' : input_layer,
-                                   'LabelTrimZeros' : False,
-                                   'LabelUnits' : 'm',
-                                   'MaxContourValue' : None,
-                                   'MinContourValue' : None,
-                                   'NContour' : None,
-                                   'OutputLayer' : output_linestring})
+                                    'DuplicatePointTolerance': 0.0,
+                                    'ContourLevels' : '',
+                                    'ContourMethod' : 3,
+                                    'ContourType' : 0,
+                                    'ExtendOption' : 0,
+                                    'InputField' : field.name(),
+                                    'InputLayer' : input_layer,
+                                    'LabelTrimZeros' : False,
+                                    'LabelDecimalPlaces' : 0,
+                                    'LabelUnits' : 'm',
+                                    'MaxContourValue' : None,
+                                    'MinContourValue' : equidistance,
+                                    'NContour' : None,
+                                    'OutputLayer' : output_linestring})
                     
                     result.update({'2 - ' + field.name() + ' - linestring': 'ok'})
                 except:
@@ -183,13 +185,20 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 
                 try:
                     #clip the contours
-                    general.run('qgis:clip', [output_polygon, clip_layer, output_polygon])
-                    general.run('qgis:clip', [output_linestring, clip_layer, output_linestring])
+                    processing.run('qgis:clip', {'INPUT' : output_polygon,
+                                                 'OVERLAY' : clip_layer,
+                                                 'OUTPUT' : output_polygon})
+                    processing.run('qgis:clip', {'INPUT' : output_linestring,
+                                                 'OVERLAY' : clip_layer,
+                                                 'OUTPUT' : output_linestring})
                     
                     result.update({'3 - ' + field.name() + ' - clip': 'ok'})
                 
                 except:
                     result.update({'3 - ' + field.name() + ' - clip': traceback.format_exc()})
+                
+                #add a filter expression to the current field
+                input_layer.setSubsetString("")
                 
                 #update progressbar
                 feedback.setProgress(int(current * total))
