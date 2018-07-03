@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtCore import QCoreApplication, QDir
 from qgis.core import (QgsProcessing,
                        QgsFeatureSink,
                        QgsProcessingParameterString,
@@ -13,7 +13,7 @@ from qgis.core import (QgsProcessing,
                        QgsProcessingFeedback)
 import processing
 import traceback
-
+import os
 
 class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
     # Constants used to refer to parameters and outputs. They will be
@@ -134,8 +134,10 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 
                 #start the processing
                 count_of_contours = self.getNumberOfContours(input_layer, field.name(), equidistance)
-                output_linestring = output_directory + '/' + input_layer.name() + '_' + field.name() + '_linestring.geojson'
-                output_polygon = output_directory + '/' + input_layer.name() + '_' + field.name() + '_polygon.geojson'
+                temp_output_linestring = QDir.toNativeSeparators(output_directory + '/temp_' + input_layer.name() + '_' + field.name() + '_linestring.geojson')
+                temp_output_polygon = QDir.toNativeSeparators(output_directory + '/temp_' + input_layer.name() + '_' + field.name() + '_polygon.geojson')
+                output_linestring = QDir.toNativeSeparators(output_directory + '/' + input_layer.name() + '_' + field.name() + '_linestring.geojson')
+                output_polygon = QDir.toNativeSeparators(output_directory + '/' + input_layer.name() + '_' + field.name() + '_polygon.geojson')
                 
                 try:
                     #create polygons
@@ -154,7 +156,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'MaxContourValue' : None,
                                     'MinContourValue' : equidistance,
                                     'NContour' : None,
-                                    'OutputLayer' : output_polygon})
+                                    'OutputLayer' : temp_output_polygon})
                 
                     result.update({'1 - ' + field.name() + ' - polygon': 'ok'})
                 except:
@@ -177,7 +179,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'MaxContourValue' : None,
                                     'MinContourValue' : equidistance,
                                     'NContour' : None,
-                                    'OutputLayer' : output_linestring})
+                                    'OutputLayer' : temp_output_linestring})
                     
                     result.update({'2 - ' + field.name() + ' - linestring': 'ok'})
                 except:
@@ -185,24 +187,26 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 
                 try:
                     #clip the contours
-                    processing.run('qgis:clip', {'INPUT' : output_polygon,
+                    processing.run('qgis:clip', {'INPUT' : temp_output_polygon,
                                                  'OVERLAY' : clip_layer,
                                                  'OUTPUT' : output_polygon})
-                    processing.run('qgis:clip', {'INPUT' : output_linestring,
+                    processing.run('qgis:clip', {'INPUT' : temp_output_linestring,
                                                  'OVERLAY' : clip_layer,
                                                  'OUTPUT' : output_linestring})
                     
                     result.update({'3 - ' + field.name() + ' - clip': 'ok'})
-                
                 except:
                     result.update({'3 - ' + field.name() + ' - clip': traceback.format_exc()})
                 
-                #add a filter expression to the current field
+                #remove the filter expression to the current field
                 input_layer.setSubsetString("")
                 
                 #update progressbar
                 feedback.setProgress(int(current * total))
                 
+        #remove all temporary files
+        self.removeTempFiles(output_directory)
+        
         return result
     
     def get_count_of_school_fields(self, layer):
@@ -224,3 +228,11 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             number_of_contours = number_of_contours + 1
         
         return number_of_contours
+    
+    def removeTempFiles(self, directory):
+        '''This function removes all temporary files from the given directory.'''
+        for entry in os.listdir(directory):
+            absolute_path = QDir.toNativeSeparators(directory + '/' + entry)
+            if os.path.isfile(absolute_path):
+                if os.path.basename(entry).startswith('temp_'):
+                    os.remove(absolute_path)
