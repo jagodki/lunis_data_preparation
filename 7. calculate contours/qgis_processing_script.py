@@ -134,6 +134,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 
                 #start the processing
                 count_of_contours = self.getNumberOfContours(input_layer, field.name(), equidistance)
+                
                 temp_output_linestring = QDir.toNativeSeparators(output_directory + '/temp_' + input_layer.name() + '_' + field.name() + '_linestring.geojson')
                 temp_output_polygon = QDir.toNativeSeparators(output_directory + '/temp_' + input_layer.name() + '_' + field.name() + '_polygon.geojson')
                 output_linestring = QDir.toNativeSeparators(output_directory + '/' + input_layer.name() + '_' + field.name() + '_linestring.geojson')
