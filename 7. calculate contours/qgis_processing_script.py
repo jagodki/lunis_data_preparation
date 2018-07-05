@@ -120,6 +120,12 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         #init the result map
         result = {}
         
+        #init parts of the different file names
+        prefix_contour = 'contour_'
+        prefix_clip = 'clip_'
+        suffix_polygon = '_polygon.geojson'
+        suffix_linestring = '_linestring.geojson'
+        
         #iterate over all fields of this layer
         for current, field in enumerate(input_layer.fields()):
             #print(str(current))
@@ -135,14 +141,9 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 #start the processing
                 count_of_contours = self.getNumberOfContours(input_layer, field.name(), equidistance)
                 
-                temp_output_linestring = QDir.toNativeSeparators(output_directory + '/temp_' + input_layer.name() + '_' + field.name() + '_linestring.geojson')
-                temp_output_polygon = QDir.toNativeSeparators(output_directory + '/temp_' + input_layer.name() + '_' + field.name() + '_polygon.geojson')
-                output_linestring = QDir.toNativeSeparators(output_directory + '/' + input_layer.name() + '_' + field.name() + '_linestring.geojson')
-                output_polygon = QDir.toNativeSeparators(output_directory + '/' + input_layer.name() + '_' + field.name() + '_polygon.geojson')
-                
                 try:
                     #create polygons
-                    processing.run("contourplugin:generatecontours",
+                    processing.run('contourplugin:generatecontours',
                                    {'ContourInterval' : equidistance,
                                     'DuplicatePointTolerance': 0.0,
                                     'ContourLevels' : '',
@@ -157,7 +158,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'MaxContourValue' : None,
                                     'MinContourValue' : equidistance,
                                     'NContour' : None,
-                                    'OutputLayer' : temp_output_polygon})
+                                    'OutputLayer' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_polygon)})
                 
                     result.update({'1 - ' + field.name() + ' - polygon': 'ok'})
                 except:
@@ -165,7 +166,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 
                 try:
                     #create linestrings
-                    processing.run("contourplugin:generatecontours",
+                    processing.run('contourplugin:generatecontours',
                                    {'ContourInterval' : equidistance,
                                     'DuplicatePointTolerance': 0.0,
                                     'ContourLevels' : '',
@@ -180,7 +181,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'MaxContourValue' : None,
                                     'MinContourValue' : equidistance,
                                     'NContour' : None,
-                                    'OutputLayer' : temp_output_linestring})
+                                    'OutputLayer' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_linestring)})
                     
                     result.update({'2 - ' + field.name() + ' - linestring': 'ok'})
                 except:
@@ -188,17 +189,34 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 
                 try:
                     #clip the contours
-                    processing.run('qgis:clip', {'INPUT' : temp_output_polygon,
-                                                 'OVERLAY' : clip_layer,
-                                                 'OUTPUT' : output_polygon})
-                    processing.run('qgis:clip', {'INPUT' : temp_output_linestring,
-                                                 'OVERLAY' : clip_layer,
-                                                 'OUTPUT' : output_linestring})
+                    processing.run('qgis:clip',
+                                   {'INPUT' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_polygon),
+                                    'OVERLAY' : clip_layer,
+                                    'OUTPUT' : QDir.toNativeSeparators(output_directory + '/' + prefix_clip + field.name() + suffix_polygon)})
+                    processing.run('qgis:clip',
+                                   {'INPUT' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_linestring),
+                                    'OVERLAY' : clip_layer,
+                                    'OUTPUT' : QDir.toNativeSeparators(output_directory + '/' + prefix_clip + field.name() + suffix_linestring)})
                     
                     result.update({'3 - ' + field.name() + ' - clip': 'ok'})
                 except:
                     result.update({'3 - ' + field.name() + ' - clip': traceback.format_exc()})
                 
+                try:
+                    #reproject the cliped layers into EPSG:4326
+                    processing.run('native:reprojectlayer',
+                                   {'INPUT' : QDir.toNativeSeparators(output_directory + '/' + prefix_clip + field.name() + suffix_polygon),
+                                    'TARGET_CRS' : 'EPSG:4326',
+                                    'OUTPUT' : QDir.toNativeSeparators(output_directory + '/' + field.name() + suffix_polygon)})
+                    processing.run('native:reprojectlayer',
+                                   {'INPUT' : QDir.toNativeSeparators(output_directory + '/' + prefix_clip + field.name() + suffix_linestring),
+                                    'TARGET_CRS' : 'EPSG:4326',
+                                    'OUTPUT' : QDir.toNativeSeparators(output_directory + '/' + field.name() + suffix_linestring)})
+                    
+                    result.update({'4 - ' + field.name() + ' - reprojection': 'ok'})
+                except:
+                    result.update({'4 - ' + field.name() + ' - reprojection': traceback.format_exc()})
+
                 #remove the filter expression to the current field
                 input_layer.setSubsetString("")
                 
@@ -206,7 +224,8 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 feedback.setProgress(int(current * total))
                 
         #remove all temporary files
-        self.removeTempFiles(output_directory)
+        self.removeTempFiles(output_directory, prefix_contour)
+        self.removeTempFiles(output_directory, prefix_clip)
         
         return result
     
@@ -230,10 +249,10 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         
         return number_of_contours
     
-    def removeTempFiles(self, directory):
+    def removeTempFiles(self, directory, prefix):
         '''This function removes all temporary files from the given directory.'''
         for entry in os.listdir(directory):
             absolute_path = QDir.toNativeSeparators(directory + '/' + entry)
             if os.path.isfile(absolute_path):
-                if os.path.basename(entry).startswith('temp_'):
+                if os.path.basename(entry).startswith(prefix):
                     os.remove(absolute_path)
