@@ -156,7 +156,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'LabelDecimalPlaces' : 0,
                                     'LabelUnits' : 'm',
                                     'MaxContourValue' : None,
-                                    'MinContourValue' : equidistance,
+                                    'MinContourValue' : None,
                                     'NContour' : None,
                                     'OutputLayer' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_polygon)})
                 
@@ -179,7 +179,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'LabelDecimalPlaces' : 0,
                                     'LabelUnits' : 'm',
                                     'MaxContourValue' : None,
-                                    'MinContourValue' : equidistance,
+                                    'MinContourValue' : None,
                                     'NContour' : None,
                                     'OutputLayer' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_linestring)})
                     
