@@ -157,7 +157,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'LabelUnits' : 'm',
                                     'MaxContourValue' : None,
                                     'MinContourValue' : None,
-                                    'NContour' : None,
+                                    'NContour' : 1000000,
                                     'OutputLayer' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_polygon)})
                 
                     result.update({'1 - ' + field.name() + ' - polygon': 'ok'})
@@ -180,7 +180,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'LabelUnits' : 'm',
                                     'MaxContourValue' : None,
                                     'MinContourValue' : None,
-                                    'NContour' : None,
+                                    'NContour' : 1000000,
                                     'OutputLayer' : QDir.toNativeSeparators(output_directory + '/' + prefix_contour + field.name() + suffix_linestring)})
                     
                     result.update({'2 - ' + field.name() + ' - linestring': 'ok'})
