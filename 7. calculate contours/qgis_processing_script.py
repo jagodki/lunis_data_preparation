@@ -72,7 +72,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFolderDestination(
                 self.OUTPUT,
-                self.tr('Output folder'),
+                self.tr('Output folder for temporary files'),
             )
         )
         
@@ -116,6 +116,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
         #get the count of all needed fields
         count_of_school_fields = self.get_count_of_school_fields(chainage_layer)
         total = 100.0 / count_of_school_fields if count_of_school_fields > 0 else 0
+        feedback.setProgress(0)
         
         #init the result map
         result = {}
@@ -191,11 +192,32 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 
                 #calculate new grid values
                 try:
-                    sql_regular_points = ""
+                    sql = ("ALTER TABLE grid_preparation.grid \n" +
+                           "ADD COLUMN \"" + field.name() + "\" DOUBLE PRECISION; \n" + 
+                           "WITH regular_points_with_values AS ( \n" + 
+                           "SELECT a.id, ((b." + field.name() + "_max + b." + field.name() + "_min) / 2) AS distance_value, a.geom \n" + 
+                           "FROM grid_preparation.regular_points a, grid_preparation.filled_contours b \n" +
+                           "WHERE st_intersects(a.geom, b.geom)), \n" +
+                           "grid_with_null_values AS ( \n" +
+                           "SELECT a.id, avg(b.distance_value) AS distance_value \n" +
+                           "FROM grid_preparation.grid a \n" +
+                           "LEFT JOIN regular_points_with_values b \n" +
+                           "ON st_intersects(a.geom, b.geom) \n" +
+                           "GROUP BY a.id) \n" +
+                           "UPDATE grid_preparation.grid a \n" +
+                           "SET " + field.name() + " = b.distance_value \n" +
+                           "FROM grid_with_null_values b \n" +
+                           "WHERE a.id = b.id; \n" +
+                           "UPDATE grid_preparation.grid \n" +
+                           "SET " + field.name() + " = -99 \n" +
+                           "WHERE " + field.name() + " IS NULL;")
+                    
+                    print(sql)
+                    print(database)
                     
                     processing.run('qgis:postgisexecutesql',
                                    {'DATABASE' : database,
-                                    'SQL' : sql_regular_points})
+                                    'SQL' : sql})
                 
                     result.update({'3 - ' + field.name() + ' - SQL to calculate grid values': 'ok'})
                 except:
@@ -208,7 +230,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 feedback.setProgress(int(current * total))
                 
         #remove all temporary files
-        self.removeTempFiles(output_directory, prefix_contour, suffix_polygon)
+        #self.removeTempFiles(output_directory, prefix_contour, suffix_polygon)
         #self.removeTempFiles(output_directory, prefix_points, suffix_file_format)
         
         #load the grid
