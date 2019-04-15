@@ -1,4 +1,4 @@
-﻿----------------------------------------
+----------------------------------------
 --create administration schema and depending tables
 CREATE SCHEMA administration;
 CREATE TABLE administration.country(
@@ -94,7 +94,7 @@ CREATE SCHEMA lunis;
 
 --create depending views in schema 'lunis'
 CREATE VIEW lunis.administration_view AS
-	SELECT ci.id AS id, ci.name AS city, r.name AS region, co.name AS country, ci.source AS source, ci.last_update AS last_update, ci.geom AS geom
+	SELECT ci.id AS id, ci.name AS city, r.name AS region, co.name AS country, ci.source AS source, ci.last_update AS last_update, ST_X(ST_Centroid(geom)) AS x, ST_Y(ST_Centroid(geom)) AS y, ci.geom AS geom
 	FROM administration.country co, administration.region r, administration.city ci
 	WHERE co.id = r.country_id AND r.id = ci.region_id;
 	

@@ -184,7 +184,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                                     'CREATEINDEX' : True,
                                     'LOWERCASE_NAMES' : True,
                                     'DROP_STRING_LENGTH' : True,
-                                    'FORCE_SINGLEPART' : True})
+                                    'FORCE_SINGLEPART' : False})
                 
                     result.update({'2 - ' + field.name() + ' - database import': 'ok'})
                 except:
