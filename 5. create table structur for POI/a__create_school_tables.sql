@@ -97,10 +97,11 @@ CREATE VIEW lunis.administration_view AS
 	SELECT ci.id AS id, ci.name AS city, r.name AS region, co.name AS country, ci.source AS source, ci.last_update AS last_update, ST_X(ST_Centroid(geom)) AS x, ST_Y(ST_Centroid(geom)) AS y, ci.geom AS geom
 	FROM administration.country co, administration.region r, administration.city ci
 	WHERE co.id = r.country_id AND r.id = ci.region_id;
-	
+
+--create depending views in schema 'lunis'
 CREATE VIEW lunis.schools_view AS
 	SELECT s_s.id, s_s.name, (admin_ci.name || '/' || admin_r.name || '/' || admin_co.name) AS district,
-		   (add_s.name || ' ' || add_h.number || ', ' || add_p.code || ' ' || add_ci.name || ', ' || add_co.name) AS school_address, 
+		   (add_s.name || '/' || add_h.number || '/' || add_p.code || '/' || add_ci.name || '/' || add_co.name) AS school_address, 
 		   s_a.name AS agency, s_t.name AS school_type, string_agg(s_spec.name, ', ' ORDER BY s_spec.name) AS school_specialisations, s_s.website AS website, s_s.wikipedia AS wikipedia,
 		   s_s.mail AS mail, s_s.telefon AS telefon, s_s.geom AS geom
 	FROM schools.schools s_s, schools.school_type s_t, schools.specialisation s_spec, schools.specialisation_schools_join s_s_j, schools.agency s_a,
