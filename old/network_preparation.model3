@@ -1,0 +1,273 @@
+<!DOCTYPE model>
+<Option type="Map">
+  <Option type="Map" name="children">
+    <Option type="Map" name="native:mergevectorlayers_1">
+      <Option value="true" type="bool" name="active"/>
+      <Option name="alg_config"/>
+      <Option value="native:mergevectorlayers" type="QString" name="alg_id"/>
+      <Option value="Merge vector layers" type="QString" name="component_description"/>
+      <Option value="942" type="double" name="component_pos_x"/>
+      <Option value="433" type="double" name="component_pos_y"/>
+      <Option name="dependencies"/>
+      <Option value="native:mergevectorlayers_1" type="QString" name="id"/>
+      <Option name="outputs"/>
+      <Option value="true" type="bool" name="outputs_collapsed"/>
+      <Option value="true" type="bool" name="parameters_collapsed"/>
+      <Option type="Map" name="params">
+        <Option type="List" name="CRS">
+          <Option type="Map">
+            <Option value="2" type="int" name="source"/>
+            <Option type="invalid" name="static_value"/>
+          </Option>
+        </Option>
+        <Option type="List" name="LAYERS">
+          <Option type="Map">
+            <Option value="qgis:pointsalonglines_1" type="QString" name="child_id"/>
+            <Option value="OUTPUT" type="QString" name="output_name"/>
+            <Option value="1" type="int" name="source"/>
+          </Option>
+          <Option type="Map">
+            <Option value="qgis:extractspecificvertices_1" type="QString" name="child_id"/>
+            <Option value="OUTPUT" type="QString" name="output_name"/>
+            <Option value="1" type="int" name="source"/>
+          </Option>
+          <Option type="Map">
+            <Option value="qgis:extractspecificvertices_2" type="QString" name="child_id"/>
+            <Option value="OUTPUT" type="QString" name="output_name"/>
+            <Option value="1" type="int" name="source"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option type="Map" name="native:splitwithlines_1">
+      <Option value="true" type="bool" name="active"/>
+      <Option name="alg_config"/>
+      <Option value="native:splitwithlines" type="QString" name="alg_id"/>
+      <Option value="Split with lines" type="QString" name="component_description"/>
+      <Option value="403" type="double" name="component_pos_x"/>
+      <Option value="114" type="double" name="component_pos_y"/>
+      <Option name="dependencies"/>
+      <Option value="native:splitwithlines_1" type="QString" name="id"/>
+      <Option type="Map" name="outputs">
+        <Option type="Map" name="splitted_network">
+          <Option value="native:splitwithlines_1" type="QString" name="child_id"/>
+          <Option value="splitted_network" type="QString" name="component_description"/>
+          <Option value="682" type="double" name="component_pos_x"/>
+          <Option value="134" type="double" name="component_pos_y"/>
+          <Option type="invalid" name="default_value"/>
+          <Option value="false" type="bool" name="mandatory"/>
+          <Option value="splitted_network" type="QString" name="name"/>
+          <Option value="OUTPUT" type="QString" name="output_name"/>
+        </Option>
+      </Option>
+      <Option value="true" type="bool" name="outputs_collapsed"/>
+      <Option value="true" type="bool" name="parameters_collapsed"/>
+      <Option type="Map" name="params">
+        <Option type="List" name="INPUT">
+          <Option type="Map">
+            <Option value="network" type="QString" name="parameter_name"/>
+            <Option value="0" type="int" name="source"/>
+          </Option>
+        </Option>
+        <Option type="List" name="LINES">
+          <Option type="Map">
+            <Option value="network" type="QString" name="parameter_name"/>
+            <Option value="0" type="int" name="source"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option type="Map" name="qgis:deleteduplicategeometries_1">
+      <Option value="true" type="bool" name="active"/>
+      <Option name="alg_config"/>
+      <Option value="qgis:deleteduplicategeometries" type="QString" name="alg_id"/>
+      <Option value="Delete duplicate geometries" type="QString" name="component_description"/>
+      <Option value="1148" type="double" name="component_pos_x"/>
+      <Option value="520" type="double" name="component_pos_y"/>
+      <Option name="dependencies"/>
+      <Option value="qgis:deleteduplicategeometries_1" type="QString" name="id"/>
+      <Option type="Map" name="outputs">
+        <Option type="Map" name="chainaged network">
+          <Option value="qgis:deleteduplicategeometries_1" type="QString" name="child_id"/>
+          <Option value="chainaged network" type="QString" name="component_description"/>
+          <Option value="1362" type="double" name="component_pos_x"/>
+          <Option value="578" type="double" name="component_pos_y"/>
+          <Option type="invalid" name="default_value"/>
+          <Option value="false" type="bool" name="mandatory"/>
+          <Option value="chainaged network" type="QString" name="name"/>
+          <Option value="OUTPUT" type="QString" name="output_name"/>
+        </Option>
+      </Option>
+      <Option value="true" type="bool" name="outputs_collapsed"/>
+      <Option value="true" type="bool" name="parameters_collapsed"/>
+      <Option type="Map" name="params">
+        <Option type="List" name="INPUT">
+          <Option type="Map">
+            <Option value="native:mergevectorlayers_1" type="QString" name="child_id"/>
+            <Option value="OUTPUT" type="QString" name="output_name"/>
+            <Option value="1" type="int" name="source"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option type="Map" name="qgis:extractspecificvertices_1">
+      <Option value="true" type="bool" name="active"/>
+      <Option name="alg_config"/>
+      <Option value="qgis:extractspecificvertices" type="QString" name="alg_id"/>
+      <Option value="Extract first vertices" type="QString" name="component_description"/>
+      <Option value="684" type="double" name="component_pos_x"/>
+      <Option value="203" type="double" name="component_pos_y"/>
+      <Option name="dependencies"/>
+      <Option value="qgis:extractspecificvertices_1" type="QString" name="id"/>
+      <Option name="outputs"/>
+      <Option value="true" type="bool" name="outputs_collapsed"/>
+      <Option value="true" type="bool" name="parameters_collapsed"/>
+      <Option type="Map" name="params">
+        <Option type="List" name="INPUT">
+          <Option type="Map">
+            <Option value="native:splitwithlines_1" type="QString" name="child_id"/>
+            <Option value="OUTPUT" type="QString" name="output_name"/>
+            <Option value="1" type="int" name="source"/>
+          </Option>
+        </Option>
+        <Option type="List" name="VERTICES">
+          <Option type="Map">
+            <Option value="2" type="int" name="source"/>
+            <Option value="0" type="QString" name="static_value"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option type="Map" name="qgis:extractspecificvertices_2">
+      <Option value="true" type="bool" name="active"/>
+      <Option name="alg_config"/>
+      <Option value="qgis:extractspecificvertices" type="QString" name="alg_id"/>
+      <Option value="Extract last vertices" type="QString" name="component_description"/>
+      <Option value="683" type="double" name="component_pos_x"/>
+      <Option value="275" type="double" name="component_pos_y"/>
+      <Option name="dependencies"/>
+      <Option value="qgis:extractspecificvertices_2" type="QString" name="id"/>
+      <Option name="outputs"/>
+      <Option value="true" type="bool" name="outputs_collapsed"/>
+      <Option value="true" type="bool" name="parameters_collapsed"/>
+      <Option type="Map" name="params">
+        <Option type="List" name="INPUT">
+          <Option type="Map">
+            <Option value="native:splitwithlines_1" type="QString" name="child_id"/>
+            <Option value="OUTPUT" type="QString" name="output_name"/>
+            <Option value="1" type="int" name="source"/>
+          </Option>
+        </Option>
+        <Option type="List" name="VERTICES">
+          <Option type="Map">
+            <Option value="2" type="int" name="source"/>
+            <Option value="-1" type="QString" name="static_value"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+    <Option type="Map" name="qgis:pointsalonglines_1">
+      <Option value="true" type="bool" name="active"/>
+      <Option name="alg_config"/>
+      <Option value="qgis:pointsalonglines" type="QString" name="alg_id"/>
+      <Option value="Points along geometry" type="QString" name="component_description"/>
+      <Option value="685" type="double" name="component_pos_x"/>
+      <Option value="355" type="double" name="component_pos_y"/>
+      <Option name="dependencies"/>
+      <Option value="qgis:pointsalonglines_1" type="QString" name="id"/>
+      <Option name="outputs"/>
+      <Option value="true" type="bool" name="outputs_collapsed"/>
+      <Option value="true" type="bool" name="parameters_collapsed"/>
+      <Option type="Map" name="params">
+        <Option type="List" name="DISTANCE">
+          <Option type="Map">
+            <Option value="distanceforcalculatiionofpointsalongnetwork" type="QString" name="parameter_name"/>
+            <Option value="0" type="int" name="source"/>
+          </Option>
+        </Option>
+        <Option type="List" name="END_OFFSET">
+          <Option type="Map">
+            <Option value="2" type="int" name="source"/>
+            <Option value="0" type="double" name="static_value"/>
+          </Option>
+        </Option>
+        <Option type="List" name="INPUT">
+          <Option type="Map">
+            <Option value="native:splitwithlines_1" type="QString" name="child_id"/>
+            <Option value="OUTPUT" type="QString" name="output_name"/>
+            <Option value="1" type="int" name="source"/>
+          </Option>
+        </Option>
+        <Option type="List" name="START_OFFSET">
+          <Option type="Map">
+            <Option value="2" type="int" name="source"/>
+            <Option value="0" type="double" name="static_value"/>
+          </Option>
+        </Option>
+      </Option>
+    </Option>
+  </Option>
+  <Option name="help"/>
+  <Option value="Lunis" type="QString" name="model_group"/>
+  <Option value="Network preparation" type="QString" name="model_name"/>
+  <Option type="Map" name="parameterDefinitions">
+    <Option type="Map" name="distanceforcalculatiionofpointsalongnetwork">
+      <Option value="1" type="int" name="data_type"/>
+      <Option value="0" type="QString" name="default"/>
+      <Option value="Distance for calculation of points along network" type="QString" name="description"/>
+      <Option value="0" type="int" name="flags"/>
+      <Option value="1.7976931348623157e+308" type="double" name="max"/>
+      <Option name="metadata"/>
+      <Option value="0" type="double" name="min"/>
+      <Option value="distanceforcalculatiionofpointsalongnetwork" type="QString" name="name"/>
+      <Option value="number" type="QString" name="parameter_type"/>
+    </Option>
+    <Option type="Map" name="native:splitwithlines_1:splitted_network">
+      <Option value="true" type="bool" name="create_by_default"/>
+      <Option value="-1" type="int" name="data_type"/>
+      <Option type="invalid" name="default"/>
+      <Option value="splitted_network" type="QString" name="description"/>
+      <Option value="0" type="int" name="flags"/>
+      <Option name="metadata"/>
+      <Option value="native:splitwithlines_1:splitted_network" type="QString" name="name"/>
+      <Option value="sink" type="QString" name="parameter_type"/>
+      <Option value="true" type="bool" name="supports_non_file_outputs"/>
+    </Option>
+    <Option type="Map" name="network">
+      <Option type="List" name="data_types">
+        <Option value="1" type="int"/>
+      </Option>
+      <Option type="invalid" name="default"/>
+      <Option value="Network" type="QString" name="description"/>
+      <Option value="0" type="int" name="flags"/>
+      <Option name="metadata"/>
+      <Option value="network" type="QString" name="name"/>
+      <Option value="vector" type="QString" name="parameter_type"/>
+    </Option>
+    <Option type="Map" name="qgis:deleteduplicategeometries_1:chainaged network">
+      <Option value="true" type="bool" name="create_by_default"/>
+      <Option value="-1" type="int" name="data_type"/>
+      <Option type="invalid" name="default"/>
+      <Option value="chainaged network" type="QString" name="description"/>
+      <Option value="0" type="int" name="flags"/>
+      <Option name="metadata"/>
+      <Option value="qgis:deleteduplicategeometries_1:chainaged network" type="QString" name="name"/>
+      <Option value="sink" type="QString" name="parameter_type"/>
+      <Option value="true" type="bool" name="supports_non_file_outputs"/>
+    </Option>
+  </Option>
+  <Option type="Map" name="parameters">
+    <Option type="Map" name="distanceforcalculatiionofpointsalongnetwork">
+      <Option value="distanceforcalculatiionofpointsalongnetwork" type="QString" name="component_description"/>
+      <Option value="125" type="double" name="component_pos_x"/>
+      <Option value="132" type="double" name="component_pos_y"/>
+      <Option value="distanceforcalculatiionofpointsalongnetwork" type="QString" name="name"/>
+    </Option>
+    <Option type="Map" name="network">
+      <Option value="network" type="QString" name="component_description"/>
+      <Option value="120" type="double" name="component_pos_x"/>
+      <Option value="60" type="double" name="component_pos_y"/>
+      <Option value="network" type="QString" name="name"/>
+    </Option>
+  </Option>
+</Option>

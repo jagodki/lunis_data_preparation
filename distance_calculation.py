@@ -206,7 +206,7 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
             nearest_point = self.getNearestPoint(network, feature.geometry())
             
             #create a new field for the current school
-            field_name = 'school_id_' + str(feature['id'])
+            field_name = 'school_id_' + str(feature[schools_id])
             check = chainaged_network.addAttribute(QgsField(field_name, QVariant.Double))
             chainaged_network.updateFields()
             if check is False:
@@ -221,19 +221,23 @@ class ExampleProcessingAlgorithm(QgsProcessingAlgorithm):
                 end = str(feature_chainage.geometry().asPoint().x()) + ',' + str(feature_chainage.geometry().asPoint().y())
                 
                 #find shortest path
-                distance = processing.run("native:shortestpathpointtopoint", {
-                    'INPUT': network,
-                    'STRATEGY': 0,
-                    'DEFAULT_SPEED': 30,
-                    'TOLERANCE': 0.1,
-                    'START_POINT': start,
-                    'END_POINT': end,
-                    'OUTPUT': 'memory:routing'
-                })['TRAVEL_COST']
-                
-                #add the result to the chainage layer
-                feature_chainage[field_name] = distance
-                chainaged_network.updateFeature(feature_chainage)
+                try:
+                    distance = processing.run("native:shortestpathpointtopoint", {
+                        'INPUT': network,
+                        'STRATEGY': 0,
+                        'DEFAULT_SPEED': 30,
+                        'TOLERANCE': 0.1,
+                        'START_POINT': start,
+                        'END_POINT': end,
+                        'OUTPUT': 'memory:routing'
+                    })['TRAVEL_COST']
+                    
+                    #add the result to the chainage layer
+                    feature_chainage[field_name] = distance
+                    chainaged_network.updateFeature(feature_chainage)
+                    
+                except QgsProcessingException:
+                    feedback.pushInfo('cannot calculate shortest path from school number ' + str(current) + ' to chainage point number ' + str(current_chainage))
                 
             # Update the progress bar and commit changes
             feedback.setProgress(int(current * total))
